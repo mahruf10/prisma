@@ -1,4 +1,6 @@
+import { error } from "node:console"
 import { prisma } from "../lib/prisma"
+import { commentStatus } from "../../generated/prisma/enums"
 
 
 const postComment=async(payload:{content:string,authorId:string,postId:string,parentId?:string})=>{
@@ -22,8 +24,9 @@ const result=await prisma.comment.create({
 return result
 }
 
-const getAllComments=()=>{
-
+const getAllComments=async()=>{
+const result=await prisma.comment.findMany()
+return result
 }
 const getOneComment=async(id:string)=>{
 return await prisma.comment.findUnique({
@@ -37,7 +40,10 @@ return await prisma.comment.findUnique({
             authorId:true,
             tags:true
           }
-        }
+        },
+        replies:true
+            
+        
     }
 })
 }
@@ -58,9 +64,66 @@ return await prisma.comment.findMany({
     }
 })
 }
+const deleteComment=async(id:string,authorId:string)=>{
+const findComment=await prisma.comment.findFirst({
+    where:{
+        id,
+        authorId
+    }
+})
+if(!findComment){
+    throw new Error('you are unable to delete this comment')
+}
+return await prisma.comment.delete({
+    where:{
+        id:findComment.id
+    }
+})
+}
+const updateComment=async(Id:string,data:{content?:string,status?:commentStatus},authorId:string)=>{
+const findComment=await prisma.comment.findFirst({
+    where:{
+        id:Id,
+        authorId
+    }
+})
+if(!findComment){
+    throw new Error('you are unable to delete this comment')
+}
+return await prisma.comment.update({
+    where:{
+        id:Id
+    },
+    data
+})
+}
+const modarate=async(id:string,data:{status:commentStatus})=>{
+
+    const findComment=await prisma.comment.findUniqueOrThrow({
+    where:{
+        id
+    }
+})
+if(!findComment){
+    throw new Error('you are unable to delete this comment')
+}
+    if(data.status===findComment.status){
+        return {message:'data is already updated...'}
+    }
+return await prisma.comment.update({
+    where:
+    {
+        id
+    },
+    data
+})
+}
 export const commentService={
     postComment,
     getAllComments,
     getOneComment,
-    getCommentByAuthor
+    getCommentByAuthor,
+    deleteComment,
+    updateComment,
+    modarate
 }
