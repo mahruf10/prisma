@@ -4,6 +4,7 @@ import { auth } from './lib/auth'
 import { toNodeHandler } from 'better-auth/node'
 import cors from 'cors'
 import commentRouter from './Comments/comment.router'
+import { notFound } from './middleWare/notFound'
 const app=express()
 app.use(cors({
     origin:process.env.APP_URL || 'http://localhost:4000',
@@ -16,5 +17,5 @@ app.get('/',(req,res)=>{
 app.all("/api/auth/*splat", toNodeHandler(auth));
 app.use('/posts',postRouter)
 app.use("/comment",commentRouter)
-
+app.use(notFound)
 export default app

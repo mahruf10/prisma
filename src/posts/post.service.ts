@@ -1,6 +1,8 @@
-import { Post } from "../../generated/prisma/client"
+import { error } from "node:console"
+import { Post, postStatus } from "../../generated/prisma/client"
 import { SortOrder } from "../../generated/prisma/internal/prismaNamespace"
 import { prisma } from "../lib/prisma"
+import { userRole } from "../middleWare/auth"
 
 const createPost=async(data:Omit<Post,'id'| 'createdAt'| 'updatedAt'| 'authorId'>,userId:string)=>{
     const result=await prisma.post.create({
@@ -88,8 +90,108 @@ const getOnePost=async(id:string)=>{
     })
   
 }
+const myPost=async(authorId:string)=>{
+    const isPostExits=await prisma.post.findMany({
+        where:{
+            authorId
+        }
+      
+    })  
+    if(!isPostExits){
+     throw new Error('there is no post for this author')
+    }
+   
+    return isPostExits
+
+}
+const updateMypost=async(authorId:string,data:Partial<Post>,postId:string,isAdmin:boolean)=>{
+const isPostExits=await prisma.post.findUniqueOrThrow({
+        where:{
+            id:postId
+        }
+      
+    })  
+    if((isPostExits.authorId!==authorId) && !isAdmin){
+        throw new Error('You are unable to edit this post')
+    }
+    if(!isAdmin){
+        delete data.isFeatured
+    }
+    const result=await prisma.post.update({
+        where:{
+            id:postId
+        },
+        data
+            
+    })
+    return result
+}
+const deletePost=async(authorId:string,postId:string,isAdmin:boolean)=>{
+const isPostExits=await prisma.post.findUniqueOrThrow({
+        where:{
+            id:postId
+        }
+      
+    })  
+    if((isPostExits.authorId!==authorId) && !isAdmin){
+        throw new Error('You are unable to edit this post')
+    }
+   
+    const result=await prisma.post.delete({
+        where:{
+            id:postId
+        }
+        
+    })
+    return result
+}
+const adminStats=async()=>{
+const totalPosts=await prisma.post.count()
+const totalComments=await prisma.comment.count()
+const totalUsers=await prisma.user.count()
+const totalAdmin=await prisma.user.aggregate({
+    where:{
+     role:userRole.admin
+    },
+    _count:true
+})
+const totalDrafts=await prisma.post.count({
+    where:{
+        status:postStatus.DRAFT
+    }
+})
+const totalPublished=await prisma.post.count({
+    where:{
+        status:postStatus.PUBLISHED
+    }
+})
+const totalArchived=await prisma.post.count({
+    where:{
+        status:postStatus.ARCHIVED
+    }
+})
+const pendingComments=await prisma.comment.count({
+    where:{
+        status:'PENDING'
+    }
+})
+ return {
+    totalAdmin:totalAdmin._count,
+    totalArchived,
+    totalComments,
+    totalDrafts,
+    totalUsers,
+    totalPosts,
+    totalPublished,
+    pendingComments
+ }
+}
 export const postService={
     createPost,
     getAllPosts,
-    getOnePost
+    getOnePost,
+    adminStats,
+    myPost,
+    updateMypost,
+    deletePost
 }
