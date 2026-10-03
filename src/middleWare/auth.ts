@@ -21,13 +21,17 @@ user='USER'
 }
 export const middleware=(...roles:userRole[])=>{
     return async (req:Request,res:Response,next:NextFunction)=>{
-        console.log(roles);
+        
       try {
           const session=await auth.api.getSession({
-            headers:req.headers as any,
+            
+        headers:req.headers as any,
             
         })
+        
+        
         if(!session?.user){
+            
             return res.status(401).json({message:'Unauthorized'})
         }
         if(!session.user.emailVerified){

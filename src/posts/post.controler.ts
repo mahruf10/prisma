@@ -34,7 +34,8 @@ const getAllPost=async(req:Request,res:Response)=>{
 
     try {
         const searchString=typeof search === 'string' ? search : undefined;
-        const result=await postService.getAllPosts({search:searchString,limit:Number(limit),page:Number(page),skip:Number(skip),sortBy,sortOrder})
+        // const result=await postService.getAllPosts({search:searchString,limit:Number(limit),page:Number(page),skip:Number(skip),sortBy,sortOrder})
+        const result=await postService.getAllPosts(req.user as {id:string,role:string})
         res.status(200).json({
             success:true,
             message:'posts are fetched',
@@ -117,7 +118,7 @@ const deletePost=async(req:Request,res:Response)=>{
  }
 }
 const adminStats=async(req:Request,res:Response)=>{
-    console.log(req.user?.role);
+    
     try {
         const result=await postService.adminStats()
         res.send({

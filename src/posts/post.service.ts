@@ -13,38 +13,47 @@ const createPost=async(data:Omit<Post,'id'| 'createdAt'| 'updatedAt'| 'authorId'
     }) 
     return result
 }
-    const getAllPosts=async(payload:{search:string | undefined,limit:number,page:number,skip:number,sortBy:string | undefined,sortOrder:string | undefined})=>{
-    const search = payload.search?.trim();
-    const result=await prisma.post.findMany({
-        take:payload.limit,
-        skip:payload.skip,
-        orderBy:
-            payload.sortBy && payload.sortOrder
-                ? { [payload.sortBy]: payload.sortOrder as SortOrder }
-                : { createdAt: 'desc' },
+//     const getAllPosts=async(payload:{search:string | undefined,limit:number,page:number,skip:number,sortBy:string | undefined,sortOrder:string | undefined})=>{
+//     const search = payload.search?.trim();
+//     const result=await prisma.post.findMany({
+//         take:payload?.limit,
+//         skip:payload?.skip,
+//         orderBy:
+//             payload.sortBy && payload.sortOrder
+//                 ? { [payload.sortBy]: payload.sortOrder as SortOrder }
+//                 : { createdAt: 'desc' },
         
-        ...(search ? {
-            where: {
-                OR:[
-                    {
-                        authorId:{
-                           contains:search,
-                           mode:'insensitive'
-                        }
-                    },{
-                        tags:{
-                            has:search
-                        }
-                    }
-                ]
-            },
+//         ...(search ? {
+//             where: {
+//                 OR:[
+//                     {
+//                         authorId:{
+//                            contains:search,
+//                            mode:'insensitive'
+//                         }
+//                     },{
+//                         tags:{
+//                             has:search
+//                         }
+//                     }
+//                 ]
+//             },
             
-        } : {})
+//         } : {})
         
         
-    })
-    return result
-}
+//     })
+//     return result
+// }
+const getAllPosts = async (user: { id: string; role: string }) => {
+  return await prisma.post.findMany({
+    where: user.role === "ADMIN" ? {} : { authorId: user.id },
+    orderBy: { createdAt: "desc" },
+  });
+};
+
+
+
 const getOnePost=async(id:string)=>{
     
     return await prisma.$transaction(async(tx)=>{
@@ -193,5 +202,6 @@ export const postService={
     adminStats,
     myPost,
     updateMypost,
-    deletePost
+    deletePost,
+
 }

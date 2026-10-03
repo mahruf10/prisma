@@ -17,11 +17,11 @@ const seedAdmin=async()=>{
         if(existEmail){
           throw new Error("Admin already exists");
     } 
-    const createAdmin=await fetch("http://localhost:3000/api/auth/sign-up/email",{
+    const createAdmin=await fetch("http://localhost:5000/api/auth/sign-up/email",{
         method:'POST',
         headers:{
             "content-type":"application/json",
-            origin:process.env.BETTER_AUTH_URL || 'http://localhost:3000'
+            origin:process.env.BETTER_AUTH_URL || 'http://localhost:5000'
 
         },
         body:JSON.stringify(adminData)
